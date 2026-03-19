@@ -4,7 +4,7 @@
 
 ## 🚀 Overview
 
-CR8OS (pronounced *crate-os*) is a specialized, quantum-native kernel designed for high-fidelity neurosymbolic and quantum-gate simulations. Unlike Stage 1 (Docker-based), the CR8OS Kernel boots directly on x86-64 hardware, delivering raw performance for Blackwell-class workloads.
+CR8OS (pronounced *create-os*) is a specialized, quantum-native kernel designed for high-fidelity neurosymbolic and quantum-gate simulations. Unlike Stage 1 (Docker-based), the CR8OS Kernel boots directly on x86-64 hardware, delivering raw performance for Blackwell-class workloads.
 
 ### Core Identity
 - **Quantum Native**: Built-in kernel-level support for quantum superposition and gate arithmetic.
