@@ -1,0 +1,22 @@
+# Build artifacts
+build/
+iso/
+*.bin
+*.o
+*.elf
+*.iso
+
+# Python / Virtual Environments
+venv/
+tools/venv/
+.venv/
+__pycache__/
+*.pyc
+
+# AI/ML Bloat
+*.aevqginf
+*.pt
+*.pth
+*.onnx
+*.weights
+tools/downloads/

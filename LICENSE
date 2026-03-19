@@ -1,0 +1,34 @@
+AEVOV SOVEREIGN SOURCE-AVAILABLE LICENSE (SSAL)
+Version 1.0, March 2026
+
+Copyright (C) 2026 Aevov Organization. All rights reserved.
+
+1. PREAMBLE
+This License governs the use, copying, and distribution of the CR8OS Kernel ("the Software"). The Software is a specialized Quantum Native implementation designed exclusively for the AevOS ecosystem. By accessing the Software, you agree to be bound by the terms of this License.
+
+2. GRANT OF RIGHTS
+The Aevov Organization hereby grants you a personal, non-exclusive, non-transferable, and limited right to:
+(a) View and audit the source code for the purpose of verifying "Quantum Native" integrity.
+(b) Reproduce and use the Software solely for internal, non-commercial development within the authorized AevOS mesh environments.
+
+3. RESTRICTIONS
+You shall NOT, without explicit written consent from the Aevov Organization:
+(a) Redistribute, sublicense, or sell the Software or any derivative works.
+(b) Port, migrate, or adapt the Software to any non-AevOS kernels, including but not limited to the Linux Kernel or BSD-based systems.
+(c) Modify the Software for use in production environments outside of the Aevov Sovereign Mesh.
+(d) Use the Software in any commercial application or service.
+
+4. SOVEREIGNTY & EXCLUSIVITY
+The Software is intended to be a "Sovereign" implementation. Any attempt to decouple the "Blackwell-QP" anyonic protocol or "Merkle-Shard" storage logic for use in external, silicon-only operating systems is a violation of this License.
+
+5. NO WARRANTY
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+6. TERMINATION
+This License and the rights granted hereunder will terminate automatically upon any breach by you of its terms.
+
+7. GOVERNING LAW
+Any legal action or proceeding related to this License shall be governed by the laws of the jurisdiction in which the Aevov Organization is registered.
+
+---
+*CR8OS: THE SOVEREIGN QUANTUM NATIVE STANDARD.*
