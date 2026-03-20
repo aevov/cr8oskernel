@@ -169,21 +169,62 @@ void serial_writestring(const char* str) {
     }
 }
 
+// BGA (Bochs Graphics Adapter) functions
+#define VBE_DISPI_IOPORT_INDEX 0x01CE
+#define VBE_DISPI_IOPORT_DATA  0x01CF
+#define VBE_DISPI_INDEX_ID     0
+#define VBE_DISPI_INDEX_XRES   1
+#define VBE_DISPI_INDEX_YRES   2
+#define VBE_DISPI_INDEX_BPP    3
+#define VBE_DISPI_INDEX_ENABLE 4
+
+void bga_write_reg(uint16_t index, uint16_t value) {
+    outb(VBE_DISPI_IOPORT_INDEX, index);
+    outb(VBE_DISPI_IOPORT_DATA, value);
+}
+
+void bga_set_video_mode(uint32_t width, uint32_t height, uint32_t bpp) {
+    bga_write_reg(VBE_DISPI_INDEX_ENABLE, 0x00); // Disable
+    bga_write_reg(VBE_DISPI_INDEX_XRES, width);
+    bga_write_reg(VBE_DISPI_INDEX_YRES, height);
+    bga_write_reg(VBE_DISPI_INDEX_BPP, bpp);
+    bga_write_reg(VBE_DISPI_INDEX_ENABLE, 0x01 | 0x40); // Enable + LFB
+}
+
+// Global Nara Canvas instance
+nara_canvas_t main_canvas;
+
+void graphics_init(void) {
+    // Set 1024x768x32 video mode
+    bga_set_video_mode(1024, 768, 32);
+    
+    main_canvas.screen_width = 1024;
+    main_canvas.screen_height = 768;
+    main_canvas.bpp = 32;
+    // QEMU BGA LFB is typically at 0xE0000000 or 0xFD000000
+    // We'll use 0xFD000000 for standard QEMU
+    main_canvas.framebuffer = (uint32_t*)0xFD000000;
+    
+    serial_writestring("BLACKWELL-QP: Nara Graphics Engine READY (1024x768x32)\r\n");
+}
+
 // CPU features detection
 void check_cpu_features(void) {
-    uint32_t eax, ebx, ecx, edx;
 
     // Check for SSE
-    __asm__ __volatile__("cpuid"
+    uint32_t eax, ebx, ecx, edx;
+    __asm__ __volatile__(
+        "cpuid"
         : "=a"(eax), "=b"(ebx), "=c"(ecx), "=d"(edx)
-        : "a"(1));
+        : "a"(1)
+    );
 
     if (edx & (1 << 25)) {
         // SSE supported
-        uint64_t cr4;
-        __asm__ __volatile__("mov %%cr4, %0" : "=r"(cr4));
-        cr4 |= (1 << 9);  // Enable OSFXSR
-        __asm__ __volatile__("mov %0, %%cr4" :: "r"(cr4));
+        uint32_t cr4_val;
+        __asm__ __volatile__("mov %%cr4, %0" : "=r"(cr4_val));
+        cr4_val |= (1 << 9);  // Enable OSFXSR
+        __asm__ __volatile__("mov %0, %%cr4" :: "r"(cr4_val));
     }
 }
 

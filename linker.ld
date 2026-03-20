@@ -1,31 +1,28 @@
-/* Linker script for CR8OS kernel */
-
-ENTRY(kernel_main)
+ENTRY(_start)
 
 SECTIONS
 {
-    /* Kernel loads at 0x1000 (4KB) */
-    . = 0x1000;
+    /* Kernel loads at 0x20000 (128KB physical) */
+    . = 0x20000;
 
-    .text : ALIGN(4K)
+    .text :
     {
-        *(.multiboot)
         *(.text)
     }
 
-    .rodata : ALIGN(4K)
+    .rodata :
     {
         *(.rodata)
     }
 
-    .data : ALIGN(4K)
+    .data :
     {
         *(.data)
     }
 
-    .bss : ALIGN(4K)
+    .bss :
     {
-        *(COMMON)
         *(.bss)
+        *(COMMON)
     }
 }

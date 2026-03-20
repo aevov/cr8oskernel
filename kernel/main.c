@@ -29,7 +29,18 @@ void terminal_clear(void);
 void kernel_print_banner(void);
 void memory_init(void);
 void hardware_init(void);
-void apl_runtime_init(void);
+void scheduler_init(void);
+void scheduler_yield(void);
+void graphics_init(void);
+void nara_compositor_init(void);
+void nara_add_card(website_card_t card);
+void nara_render(void);
+
+// Serial port functions (from hardware.c)
+void serial_init(void);
+void serial_writestring(const char* str);
+void* blackwell_secure_syscall(uint64_t syscall_id, uint64_t signature, void* params);
+void* scheduler_get_current(void);
 
 // Terminal state
 static uint16_t* terminal_buffer;
@@ -172,15 +183,42 @@ void kernel_print_banner(void) {
     terminal_setcolor(vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK));
 }
 
-// Kernel main entry point (called from stage2.asm)
-void kernel_main(void) {
-    // Initialize terminal
-    terminal_initialize();
+// Test WebsiteCard buffer
+static uint32_t test_card_buffer[100 * 100];
 
-    // Display banner
+// Kernel main entry point (called from stage2.asm)
+// Test thread for anyonic syscalls
+void anyonic_test_task(void) {
+    serial_writestring("TEST-TASK: Initiating secure anyonic traversal...\r\n");
+    
+    anyonic_thread_t* current = (anyonic_thread_t*)scheduler_get_current();
+    if (current) {
+        // Generate valid signature using anyonic index
+        uint64_t syscall_id = 0xAABBCCDD;
+        uint64_t signature = syscall_id ^ current->anyonic_index;
+        
+        blackwell_secure_syscall(syscall_id, signature, NULL);
+        
+        // Attempt an unauthorized traversal for firewall verification
+        serial_writestring("TEST-TASK: Verifying unauthorized traversal blocking...\r\n");
+        blackwell_secure_syscall(syscall_id, 0xBADF00D, NULL);
+    }
+    
+    serial_writestring("TEST-TASK: Anyonic verification complete. Yielding to master...\r\n");
+    while(1) {
+        scheduler_yield();
+    }
+}
+
+void kernel_main(void) {
+    // Early serial debug
+    serial_init();
+    serial_writestring("BLACKWELL-QP: Kernel Entry Point Reached\r\n");
+    
+    // Initialize primary subsystems
+    terminal_initialize();
     kernel_print_banner();
 
-    // Initialize subsystems
     terminal_setcolor(vga_entry_color(VGA_COLOR_YELLOW, VGA_COLOR_BLACK));
     terminal_writestring("[BOOT] ");
     terminal_setcolor(vga_entry_color(VGA_COLOR_WHITE, VGA_COLOR_BLACK));
@@ -204,14 +242,32 @@ void kernel_main(void) {
     terminal_setcolor(vga_entry_color(VGA_COLOR_LIGHT_GREEN, VGA_COLOR_BLACK));
     terminal_writestring("OK\n");
 
-    // APL Runtime
+    // Blackwell-QP Anyonic Layer
     terminal_setcolor(vga_entry_color(VGA_COLOR_LIGHT_BLUE, VGA_COLOR_BLACK));
     terminal_writestring("  [*] ");
     terminal_setcolor(vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK));
-    terminal_writestring("APL runtime... ");
-    apl_runtime_init();
+    terminal_writestring("Blackwell-QP Anyonic Layer... ");
+    scheduler_init();
+    terminal_setcolor(vga_entry_color(VGA_COLOR_LIGHT_GREEN, VGA_COLOR_BLACK));
+    terminal_writestring("OK\n");
+
+    // Nara Graphics & Compositor
+    terminal_setcolor(vga_entry_color(VGA_COLOR_LIGHT_BLUE, VGA_COLOR_BLACK));
+    terminal_writestring("  [*] ");
+    terminal_setcolor(vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK));
+    terminal_writestring("Nara Spatial Compositor... ");
+    graphics_init();
+    nara_compositor_init();
     terminal_setcolor(vga_entry_color(VGA_COLOR_LIGHT_GREEN, VGA_COLOR_BLACK));
     terminal_writestring("OK\n\n");
+
+    // Prototype WebsiteCard
+    for (int i = 0; i < 100 * 100; i++) test_card_buffer[i] = 0x00FF00; // Resonant Green
+    website_card_t proto_card = {0, 200, 200, 1, 100, 100, test_card_buffer, 0.75, true};
+    nara_add_card(proto_card);
+
+    // Initial Render
+    nara_render();
 
     // Boot complete
     terminal_setcolor(vga_entry_color(VGA_COLOR_LIGHT_GREEN, VGA_COLOR_BLACK));
@@ -219,12 +275,16 @@ void kernel_main(void) {
     terminal_setcolor(vga_entry_color(VGA_COLOR_WHITE, VGA_COLOR_BLACK));
     terminal_writestring("CR8OS kernel initialized successfully!\n\n");
 
-    terminal_setcolor(vga_entry_color(VGA_COLOR_LIGHT_CYAN, VGA_COLOR_BLACK));
-    terminal_writestring("Ready for quantum + genetic + symbolic operations.\n");
-    terminal_writestring("Waiting for userland...\n");
+    terminal_writestring("Ready for Blackwell-QP anyonic operations.\n");
+    terminal_writestring("Entering superposition scheduler loop...\n");
 
-    // Hang here for now (will load userland later)
+    // Spawn test anyonic task
+    scheduler_spawn_thread(anyonic_test_task, 0.85);
+
+    // Start scheduling
+    serial_writestring("BLACKWELL-QP: Initiating QMT Native Execution Flow\r\n");
     while(1) {
+        scheduler_yield();
         __asm__ __volatile__("hlt");
     }
 }

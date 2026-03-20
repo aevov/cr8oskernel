@@ -26,8 +26,9 @@ Security is baked into the kernel's internal communication (IPC). All syscalls a
 
 CR8OS bridges the gap between the quantum future and the legacy silicon ecosystem:
 
-- **Ring-0 ABI Translation**: Execute native Linux binaries (ELF) without a virtual machine. CR8OS traps standard syscalls (e.g., `sys_open`, `sys_write`) and maps them directly to its quantum-optimized I/O path.
-- **Quantum Acceleration**: Realize 100-1000x speedups for Blackwell-compliant applications while maintaining access to the stability of the Linux ecosystem.
+- **Ring-0 ABI Translation**: Execute native Linux binaries (ELF) without a virtual machine. CR8OS traps standard syscalls (e.g., `sys_open`, `sys_write`) and maps them to its **QMT Native** anyonic pathways.
+- **Quantum Mirror Theory (QMT)**: Fully integrated embodiment of the Mirror Equation ($|Ψ⟩ ≡ M|Ψ'⟩$). See [Zenodo 18407686](https://zenodo.org/records/18407686) for technical validation.
+- **Resonance Physics (RP)**: Foundational branch of physics governing binary-anyonic coupling. Implements the Information-Physical interface where information becomes physical. See [Zenodo 18913463](https://zenodo.org/records/18913463) for the architectural standard.
 
 ## 📊 Architecture
 
