@@ -1,0 +1,1617 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>cr8OS Model Import Tools</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-tertiary: #1a1a25;
+            --bg-card: #15151f;
+            --accent-quantum: #00d4ff;
+            --accent-evolution: #00ff88;
+            --accent-warning: #ffaa00;
+            --accent-error: #ff4466;
+            --accent-purple: #aa66ff;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0b0;
+            --text-muted: #606075;
+            --border: #2a2a3a;
+            --glow-quantum: 0 0 20px rgba(0, 212, 255, 0.3);
+            --glow-evolution: 0 0 20px rgba(0, 255, 136, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        .bg-pattern {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(ellipse at 20% 20%, rgba(0, 212, 255, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(0, 255, 136, 0.06) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 2rem;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 42px;
+            height: 42px;
+            background: linear-gradient(135deg, var(--accent-quantum), var(--accent-evolution));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .logo-text {
+            font-size: 1.4rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-quantum), var(--accent-evolution));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo-subtitle {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .status-dot.connected {
+            background: var(--accent-evolution);
+            box-shadow: 0 0 10px var(--accent-evolution);
+        }
+
+        .status-dot.disconnected {
+            background: var(--accent-error);
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 2rem;
+            background: var(--bg-secondary);
+            padding: 4px;
+            border-radius: 12px;
+            width: fit-content;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            border-radius: 8px;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .tab:hover {
+            color: var(--text-primary);
+        }
+
+        .tab.active {
+            background: var(--accent-quantum);
+            color: #000;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 1000px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: rgba(0, 212, 255, 0.5);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .card-icon.quantum {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(0, 212, 255, 0.1));
+            color: var(--accent-quantum);
+        }
+
+        .card-icon.evolution {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.2), rgba(0, 255, 136, 0.1));
+            color: var(--accent-evolution);
+        }
+
+        .card-icon.purple {
+            background: linear-gradient(135deg, rgba(170, 102, 255, 0.2), rgba(170, 102, 255, 0.1));
+            color: var(--accent-purple);
+        }
+
+        .card-icon.warning {
+            background: linear-gradient(135deg, rgba(255, 170, 0, 0.2), rgba(255, 170, 0, 0.1));
+            color: var(--accent-warning);
+        }
+
+        .card-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .card-subtitle {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .model-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 10px;
+            margin-bottom: 1.5rem;
+        }
+
+        .model-option {
+            position: relative;
+            background: var(--bg-tertiary);
+            border: 2px solid transparent;
+            border-radius: 12px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .model-option:hover {
+            border-color: var(--accent-quantum);
+            background: rgba(0, 212, 255, 0.05);
+        }
+
+        .model-option.selected {
+            border-color: var(--accent-evolution);
+            background: rgba(0, 255, 136, 0.1);
+        }
+
+        .model-option::after {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            font-size: 0.55rem;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .model-option.mit::after {
+            content: 'MIT';
+            background: var(--accent-evolution);
+            color: #000;
+        }
+
+        .model-option.apache::after {
+            content: 'Apache';
+            background: var(--accent-quantum);
+            color: #000;
+        }
+
+        .model-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 2px;
+        }
+
+        .model-size {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: var(--accent-quantum);
+            box-shadow: var(--glow-quantum);
+        }
+
+        .form-textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 14px 28px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-quantum), var(--accent-evolution));
+            color: #000;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--glow-quantum);
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent-quantum);
+        }
+
+        .btn-danger {
+            background: var(--accent-error);
+            color: #fff;
+        }
+
+        .btn-full {
+            width: 100%;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .progress-section {
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-quantum), var(--accent-evolution));
+            border-radius: 4px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .progress-text {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .terminal {
+            background: #0d0d12;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            max-height: 350px;
+            overflow-y: auto;
+            margin-top: 1rem;
+        }
+
+        .terminal-line {
+            margin-bottom: 4px;
+            line-height: 1.5;
+        }
+
+        .terminal-line.info {
+            color: var(--text-secondary);
+        }
+
+        .terminal-line.success {
+            color: var(--accent-evolution);
+        }
+
+        .terminal-line.error {
+            color: var(--accent-error);
+        }
+
+        .terminal-line.highlight {
+            color: var(--accent-quantum);
+        }
+
+        .model-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .model-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem;
+            background: var(--bg-tertiary);
+            border-radius: 10px;
+            border: 1px solid var(--border);
+        }
+
+        .model-item-info {
+            flex: 1;
+        }
+
+        .model-item-name {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .model-item-meta {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            display: flex;
+            gap: 16px;
+        }
+
+        .model-item-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 0.85rem;
+        }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-top: 1.5rem;
+        }
+
+        .stat-box {
+            background: var(--bg-tertiary);
+            border-radius: 10px;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--accent-quantum);
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .card-full {
+            grid-column: 1 / -1;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .spinner {
+            width: 18px;
+            height: 18px;
+            border: 2px solid transparent;
+            border-top-color: currentColor;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .alert-info {
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid var(--accent-quantum);
+            color: var(--accent-quantum);
+        }
+
+        .alert-success {
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid var(--accent-evolution);
+            color: var(--accent-evolution);
+        }
+
+        .alert-error {
+            background: rgba(255, 68, 102, 0.1);
+            border: 1px solid var(--accent-error);
+            color: var(--accent-error);
+        }
+
+        /* Drop Zone Styles */
+        .drop-zone {
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            padding: 3rem 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            background: var(--bg-tertiary);
+        }
+
+        .drop-zone:hover {
+            border-color: var(--accent-quantum);
+            background: rgba(0, 212, 255, 0.05);
+        }
+
+        .drop-zone.drag-over {
+            border-color: var(--accent-evolution);
+            background: rgba(0, 255, 136, 0.1);
+            transform: scale(1.02);
+        }
+
+        .drop-zone-content {
+            pointer-events: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-pattern"></div>
+
+    <header>
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">∞</div>
+                <div>
+                    <div class="logo-text">cr8OS Model Tools</div>
+                    <div class="logo-subtitle">HuggingFace → .aevQG∞</div>
+                </div>
+            </div>
+            <div class="status-indicator">
+                <div class="status-dot" id="serverStatus"></div>
+                <span id="serverStatusText">Connecting...</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('convert')">🔄 Convert</button>
+            <button class="tab" onclick="switchTab('retrain')">🧠 Retrain</button>
+            <button class="tab" onclick="switchTab('local')">📤 Local Upload</button>
+            <button class="tab" onclick="switchTab('zim')">📚 ZIM Extract</button>
+            <button class="tab" onclick="switchTab('models')">📁 Models</button>
+        </div>
+
+        <!-- Convert Tab -->
+        <div class="tab-content active" id="tab-convert">
+            <div class="main-grid">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon quantum">🤖</div>
+                        <div>
+                            <div class="card-title">Select Model</div>
+                            <div class="card-subtitle">MIT & Apache 2.0 licensed only</div>
+                        </div>
+                    </div>
+
+                    <div class="model-selector" id="modelSelector">
+                        <div class="model-option mit selected" onclick="selectModel(this, 'MBZUAI/MobiLlama-1B')">
+                            <div class="model-name">MobiLlama</div>
+                            <div class="model-size">1.2B params</div>
+                        </div>
+                        <div class="model-option mit" onclick="selectModel(this, 'microsoft/phi-3-mini-4k-instruct')">
+                            <div class="model-name">Phi-3 Mini</div>
+                            <div class="model-size">3.8B params</div>
+                        </div>
+                        <div class="model-option apache"
+                            onclick="selectModel(this, 'TinyLlama/TinyLlama-1.1B-Chat-v1.0')">
+                            <div class="model-name">TinyLlama</div>
+                            <div class="model-size">1.1B params</div>
+                        </div>
+                        <div class="model-option apache" onclick="selectModel(this, 'HuggingFaceTB/SmolLM2-1.7B')">
+                            <div class="model-name">SmolLM2</div>
+                            <div class="model-size">1.7B params</div>
+                        </div>
+                        <div class="model-option apache" onclick="selectModel(this, 'Qwen/Qwen2.5-1.5B')">
+                            <div class="model-name">Qwen2.5</div>
+                            <div class="model-size">1.5B params</div>
+                        </div>
+                        <div class="model-option apache" onclick="selectModel(this, 'stabilityai/stablelm-2-1_6b')">
+                            <div class="model-name">StableLM 2</div>
+                            <div class="model-size">1.6B params</div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Or enter custom HuggingFace ID</label>
+                        <input type="text" class="form-input" id="customModel"
+                            placeholder="e.g., mistralai/Mistral-7B-v0.3">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Target Parameters</label>
+                        <select class="form-select" id="targetParams">
+                            <option value="27M" selected>27M (AevCog default)</option>
+                            <option value="50M">50M (Enhanced)</option>
+                            <option value="100M">100M (High capacity)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon evolution">⚡</div>
+                        <div>
+                            <div class="card-title">Convert & Deploy</div>
+                            <div class="card-subtitle">Transform to .aevQG∞ format</div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Output Filename</label>
+                        <input type="text" class="form-input" id="outputFile" value="aevcog_pretrained.aevqginf">
+                    </div>
+
+                    <button class="btn btn-primary btn-full" id="convertBtn" onclick="startConversion()">
+                        🚀 Start Conversion
+                    </button>
+
+                    <div class="progress-section" id="convertProgress" style="display: none;">
+                        <div class="progress-text" id="convertStep">Initializing...</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="convertFill"></div>
+                        </div>
+                    </div>
+
+                    <div class="stats-row" id="convertStats" style="display: none;">
+                        <div class="stat-box">
+                            <div class="stat-value" id="statSource">-</div>
+                            <div class="stat-label">Source</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" id="statTarget">27M</div>
+                            <div class="stat-label">Target</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" id="statRatio">-</div>
+                            <div class="stat-label">Compression</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" id="statSize">-</div>
+                            <div class="stat-label">Size</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card card-full">
+                    <div class="card-header">
+                        <div class="card-icon purple">💻</div>
+                        <div>
+                            <div class="card-title">Console Output</div>
+                            <div class="card-subtitle">Real-time conversion logs</div>
+                        </div>
+                    </div>
+                    <div class="terminal" id="convertTerminal">
+                        <div class="terminal-line highlight">╔════════════════════════════════════════════╗</div>
+                        <div class="terminal-line highlight">║ cr8OS Model Import Tool v1.0 ║</div>
+                        <div class="terminal-line highlight">╚════════════════════════════════════════════╝</div>
+                        <div class="terminal-line info">&nbsp;</div>
+                        <div class="terminal-line info">Ready. Select a model and click "Start Conversion".</div>
+                        <div class="terminal-line info">Make sure the API server is running:</div>
+                        <div class="terminal-line highlight"> python3 api_server.py</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Retrain Tab -->
+        <div class="tab-content" id="tab-retrain">
+            <div class="main-grid">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon warning">🧠</div>
+                        <div>
+                            <div class="card-title">Retrain Model</div>
+                            <div class="card-subtitle">Fine-tune existing .aevQG∞ on new data</div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Select Model to Retrain</label>
+                        <select class="form-select" id="retrainModel">
+                            <option value="">-- Select a model --</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Training Data (JSON array)</label>
+                        <textarea class="form-textarea" id="trainingData" placeholder='[
+  {"input": [0.1, 0.5, 0.3], "target": [0.8]},
+  {"input": [0.9, 0.2, 0.7], "target": [0.2]},
+  ...
+]'></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Training Epochs</label>
+                        <input type="number" class="form-input" id="retrainEpochs" value="10" min="1" max="100">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Learning Rate</label>
+                        <input type="number" class="form-input" id="retrainLR" value="0.001" step="0.0001" min="0.0001"
+                            max="0.1">
+                    </div>
+
+                    <button class="btn btn-primary btn-full" id="retrainBtn" onclick="startRetraining()">
+                        🔄 Start Retraining
+                    </button>
+
+                    <div class="progress-section" id="retrainProgress" style="display: none;">
+                        <div class="progress-text" id="retrainStep">Initializing...</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="retrainFill"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon evolution">📊</div>
+                        <div>
+                            <div class="card-title">Training Guide</div>
+                            <div class="card-subtitle">How to prepare data for retraining</div>
+                        </div>
+                    </div>
+
+                    <div style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6;">
+                        <p><strong>Data Format:</strong></p>
+                        <p>JSON array of training samples. Each sample can have:</p>
+                        <ul style="margin: 0.5rem 0 1rem 1.5rem;">
+                            <li><code>input</code>: Array of numbers (features)</li>
+                            <li><code>target</code>: Array of numbers (labels)</li>
+                        </ul>
+
+                        <p><strong>Example - XOR Training:</strong></p>
+                        <pre
+                            style="background: var(--bg-tertiary); padding: 0.75rem; border-radius: 8px; margin: 0.5rem 0; overflow-x: auto;">[
+  {"input": [0, 0], "target": [0]},
+  {"input": [0, 1], "target": [1]},
+  {"input": [1, 0], "target": [1]},
+  {"input": [1, 1], "target": [0]}
+]</pre>
+
+                        <p><strong>Tips:</strong></p>
+                        <ul style="margin: 0.5rem 0 0 1.5rem;">
+                            <li>More epochs = better learning (but slower)</li>
+                            <li>Lower LR = more stable training</li>
+                            <li>Include diverse training samples</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="card card-full">
+                    <div class="card-header">
+                        <div class="card-icon purple">💻</div>
+                        <div>
+                            <div class="card-title">Training Logs</div>
+                            <div class="card-subtitle">Real-time training output</div>
+                        </div>
+                    </div>
+                    <div class="terminal" id="retrainTerminal">
+                        <div class="terminal-line info">Select a model and provide training data to begin.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Local Upload Tab -->
+        <div class="tab-content" id="tab-local">
+            <div class="main-grid">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon quantum">📤</div>
+                        <div>
+                            <div class="card-title">Upload Local Model</div>
+                            <div class="card-subtitle">Import .safetensors or .bin files from disk</div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <span>ℹ️</span>
+                        <span>Upload your locally downloaded Phi models (2.2GB/4GB) for fast conversion</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Select Model File</label>
+                        <div id="dropZone" class="drop-zone">
+                            <div class="drop-zone-content">
+                                <div style="font-size: 3rem; margin-bottom: 1rem;">📁</div>
+                                <div style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem;">Drag & Drop
+                                    .safetensors file</div>
+                                <div style="color: var(--text-muted); margin-bottom: 1rem;">or</div>
+                                <button class="btn btn-secondary"
+                                    onclick="document.getElementById('fileInput').click()">
+                                    Browse Files
+                                </button>
+                                <input type="file" id="fileInput" accept=".safetensors,.bin" style="display: none;"
+                                    onchange="handleFileSelect(event)">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="selectedFile" style="display: none; margin-top: 1rem;">
+                        <div class="form-label">Selected File</div>
+                        <div
+                            style="background: var(--bg-tertiary); padding: 1rem; border-radius: 10px; display: flex; align-items: center; gap: 12px;">
+                            <div style="font-size: 2rem;">📄</div>
+                            <div style="flex: 1;">
+                                <div id="fileName" style="font-weight: 600;"></div>
+                                <div id="fileSize" style="font-size: 0.85rem; color: var(--text-muted);"></div>
+                            </div>
+                            <button class="btn btn-danger btn-small" onclick="clearFile()">✕ Remove</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group" id="localOutputGroup" style="display: none;">
+                        <label class="form-label">Output Filename</label>
+                        <input type="text" class="form-input" id="localOutputFile" value="phi_local.aevqginf">
+                    </div>
+
+                    <button class="btn btn-primary btn-full" id="uploadBtn" onclick="startLocalUpload()" disabled>
+                        🚀 Upload & Convert
+                    </button>
+
+                    <div class="progress-section" id="uploadProgress" style="display: none;">
+                        <div class="progress-text" id="uploadStep">Uploading...</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="uploadFill"></div>
+                        </div>
+                    </div>
+
+                    <div class="stats-row" id="uploadStats" style="display: none;">
+                        <div class="stat-box">
+                            <div class="stat-value" id="statUploaded">0 MB</div>
+                            <div class="stat-label">Uploaded</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" id="statSpeed">- MB/s</div>
+                            <div class="stat-label">Speed</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" id="statETA">-</div>
+                            <div class="stat-label">ETA</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" id="statStatus">-</div>
+                            <div class="stat-label">Status</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card card-full">
+                    <div class="card-header">
+                        <div class="card-icon purple">💻</div>
+                        <div>
+                            <div class="card-title">Upload Console</div>
+                            <div class="card-subtitle">Real-time upload and conversion logs</div>
+                        </div>
+                    </div>
+                    <div class="terminal" id="uploadTerminal">
+                        <div class="terminal-line info">Ready. Select a .safetensors file to upload.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ZIM Extract Tab -->
+        <div class="tab-content" id="tab-zim">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon warning">📚</div>
+                    <div>
+                        <div class="card-title">ZIM Knowledge Extraction</div>
+                        <div class="card-subtitle">Stream and extract from large ZIM files (resumable)</div>
+                    </div>
+                </div>
+
+                <div class="alert alert-info">
+                    <span>ℹ️</span>
+                    <span>Process 200GB+ ZIM files with resume capability. System preserves progress even if
+                        interrupted.</span>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">ZIM File Path</label>
+                    <input type="text" class="form-input" id="zimPath"
+                        placeholder="/path/to/wikipedia_en_all_nopic_2024.zim">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Worker Threads</label>
+                    <select class="form-select" id="zimWorkers">
+                        <option value="auto" selected>Auto (CPU count)</option>
+                        <option value="4">4 workers</option>
+                        <option value="8">8 workers</option>
+                        <option value="16">16 workers</option>
+                    </select>
+                </div>
+
+                <button class="btn btn-primary btn-full" onclick="startZimExtraction()">
+                    🚀 Start Extraction
+                </button>
+
+                <div id="zimStatus" style="display: none; margin-top: 2rem;">
+                    <div class="progress-text" id="zimStep">Initializing...</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="zimFill"></div>
+                    </div>
+                    <div class="stats-row" style="margin-top: 1rem;">
+                        <div class="stat-box">
+                            <div class="stat-value" id="zimChunks">0/0</div>
+                            <div class="stat-label">Chunks</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" id="zimKnowledge">0</div>
+                            <div class="stat-label">Facts Extracted</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" id="zimWorkerCount">0</div>
+                            <div class="stat-label">Active Workers</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" id="zimResumable">✓</div>
+                            <div class="stat-label">Resumable</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Models Tab -->
+        <div class="tab-content" id="tab-models">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon quantum">📁</div>
+                    <div>
+                        <div class="card-title">Available Models</div>
+                        <div class="card-subtitle">Converted .aevQG∞ files in boot directory</div>
+                    </div>
+                </div>
+
+                <div id="modelListAlert" class="alert alert-info" style="display: none;">
+                    <span>ℹ️</span>
+                    <span>No models found. Convert a HuggingFace model to get started!</span>
+                </div>
+
+                <div class="model-list" id="modelList">
+                    <!-- Populated dynamically -->
+                </div>
+
+                <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border);">
+                    <button class="btn btn-secondary" onclick="refreshModels()">🔄 Refresh List</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="safetensors-chunker.js"></script>
+    <script>
+        // Configuration
+        const API_BASE = 'http://localhost:8765';
+        let selectedModel = 'MBZUAI/MobiLlama-1B';
+        let currentJobId = null;
+        let pollInterval = null;
+
+        // Check server connection
+        async function checkServer() {
+            try {
+                const resp = await fetch(`${API_BASE}/api/recommended`);
+                if (resp.ok) {
+                    document.getElementById('serverStatus').classList.add('connected');
+                    document.getElementById('serverStatus').classList.remove('disconnected');
+                    document.getElementById('serverStatusText').textContent = 'Server Connected';
+                    return true;
+                }
+            } catch (e) { }
+            document.getElementById('serverStatus').classList.add('disconnected');
+            document.getElementById('serverStatus').classList.remove('connected');
+            document.getElementById('serverStatusText').textContent = 'Server Offline';
+            return false;
+        }
+
+        // Tab switching
+        function switchTab(name) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById(`tab-${name}`).classList.add('active');
+
+            if (name === 'models') refreshModels();
+            if (name === 'retrain') refreshRetrainModels();
+        }
+
+        // Model selection
+        function selectModel(element, modelId) {
+            document.querySelectorAll('.model-option').forEach(el => el.classList.remove('selected'));
+            element.classList.add('selected');
+            selectedModel = modelId;
+            document.getElementById('customModel').value = '';
+            log('convertTerminal', `Selected: ${modelId}`, 'info');
+        }
+
+        // Logging
+        function log(terminalId, message, type = 'info') {
+            const terminal = document.getElementById(terminalId);
+            const line = document.createElement('div');
+            line.className = `terminal-line ${type}`;
+            line.textContent = message;
+            terminal.appendChild(line);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        function clearTerminal(terminalId) {
+            document.getElementById(terminalId).innerHTML = '';
+        }
+
+        // Start conversion
+        async function startConversion() {
+            const connected = await checkServer();
+            if (!connected) {
+                alert('API server not running! Start it with:\n\npython3 api_server.py');
+                return;
+            }
+
+            const customModel = document.getElementById('customModel').value.trim();
+            const modelToConvert = customModel || selectedModel;
+            const outputFile = document.getElementById('outputFile').value;
+            const targetParams = document.getElementById('targetParams').value;
+
+            document.getElementById('convertBtn').disabled = true;
+            document.getElementById('convertBtn').innerHTML = '<span class="spinner"></span> Converting...';
+            document.getElementById('convertProgress').style.display = 'block';
+            document.getElementById('convertStats').style.display = 'grid';
+
+            clearTerminal('convertTerminal');
+            log('convertTerminal', '╔════════════════════════════════════════════╗', 'highlight');
+            log('convertTerminal', '║   cr8OS Model Import Tool v1.0            ║', 'highlight');
+            log('convertTerminal', '╚════════════════════════════════════════════╝', 'highlight');
+            log('convertTerminal', '', 'info');
+
+            try {
+                const resp = await fetch(`${API_BASE}/api/convert`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        model: modelToConvert,
+                        output: outputFile,
+                        target_params: targetParams
+                    })
+                });
+
+                const data = await resp.json();
+
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                currentJobId = data.job_id;
+                log('convertTerminal', `Job started: ${currentJobId}`, 'info');
+
+                // Poll for updates
+                pollInterval = setInterval(() => pollJob('convert'), 1000);
+
+            } catch (error) {
+                log('convertTerminal', `Error: ${error.message}`, 'error');
+                resetConvertUI();
+            }
+        }
+
+        // Poll job status
+        async function pollJob(type) {
+            if (!currentJobId) return;
+
+            try {
+                const resp = await fetch(`${API_BASE}/api/job/${currentJobId}`);
+                const job = await resp.json();
+
+                const terminalId = type === 'convert' ? 'convertTerminal' : 'retrainTerminal';
+                const fillId = type === 'convert' ? 'convertFill' : 'retrainFill';
+                const stepId = type === 'convert' ? 'convertStep' : 'retrainStep';
+
+                // Update progress
+                document.getElementById(fillId).style.width = `${job.progress}%`;
+                document.getElementById(stepId).textContent = job.step;
+
+                // Update logs
+                const terminal = document.getElementById(terminalId);
+                const currentLines = terminal.children.length;
+                for (let i = currentLines - 4; i < job.logs.length; i++) {
+                    if (i >= 0 && job.logs[i]) {
+                        const isSuccess = job.logs[i].includes('✓');
+                        const isError = job.logs[i].includes('✗');
+                        log(terminalId, job.logs[i], isSuccess ? 'success' : isError ? 'error' : 'info');
+                    }
+                }
+
+                // Update stats
+                if (type === 'convert' && job.result) {
+                    document.getElementById('statSource').textContent = `${(job.result.source_params / 1e9).toFixed(1)}B`;
+                    document.getElementById('statTarget').textContent = `${(job.result.target_params / 1e6).toFixed(0)}M`;
+                    document.getElementById('statRatio').textContent = `${(job.result.source_params / job.result.target_params).toFixed(0)}×`;
+                    document.getElementById('statSize').textContent = `${(job.result.size / 1e6).toFixed(1)}MB`;
+                }
+
+                // Check completion
+                if (job.status === 'complete' || job.status === 'error') {
+                    clearInterval(pollInterval);
+                    currentJobId = null;
+
+                    if (type === 'convert') {
+                        resetConvertUI();
+                    } else {
+                        resetRetrainUI();
+                    }
+
+                    if (job.status === 'complete') {
+                        log(terminalId, '', 'info');
+                        log(terminalId, '✓ Operation completed successfully!', 'success');
+                    }
+                }
+
+            } catch (error) {
+                console.error('Poll error:', error);
+            }
+        }
+
+        function resetConvertUI() {
+            document.getElementById('convertBtn').disabled = false;
+            document.getElementById('convertBtn').innerHTML = '🚀 Start Conversion';
+        }
+
+        function resetRetrainUI() {
+            document.getElementById('retrainBtn').disabled = false;
+            document.getElementById('retrainBtn').innerHTML = '🔄 Start Retraining';
+        }
+
+        // Start retraining
+        async function startRetraining() {
+            const connected = await checkServer();
+            if (!connected) {
+                alert('API server not running!');
+                return;
+            }
+
+            const modelPath = document.getElementById('retrainModel').value;
+            if (!modelPath) {
+                alert('Please select a model to retrain');
+                return;
+            }
+
+            let trainingData;
+            try {
+                trainingData = JSON.parse(document.getElementById('trainingData').value);
+            } catch (e) {
+                alert('Invalid JSON in training data');
+                return;
+            }
+
+            const epochs = parseInt(document.getElementById('retrainEpochs').value);
+            const lr = parseFloat(document.getElementById('retrainLR').value);
+
+            document.getElementById('retrainBtn').disabled = true;
+            document.getElementById('retrainBtn').innerHTML = '<span class="spinner"></span> Training...';
+            document.getElementById('retrainProgress').style.display = 'block';
+
+            clearTerminal('retrainTerminal');
+            log('retrainTerminal', 'Starting retraining...', 'info');
+
+            try {
+                const resp = await fetch(`${API_BASE}/api/retrain`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        model: modelPath,
+                        data: trainingData,
+                        epochs: epochs,
+                        lr: lr
+                    })
+                });
+
+                const data = await resp.json();
+
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                currentJobId = data.job_id;
+                log('retrainTerminal', `Job started: ${currentJobId}`, 'info');
+
+                pollInterval = setInterval(() => pollJob('retrain'), 1000);
+
+            } catch (error) {
+                log('retrainTerminal', `Error: ${error.message}`, 'error');
+                resetRetrainUI();
+            }
+        }
+
+        // Refresh models list
+        async function refreshModels() {
+            const connected = await checkServer();
+            if (!connected) return;
+
+            try {
+                const resp = await fetch(`${API_BASE}/api/models`);
+                const data = await resp.json();
+
+                const list = document.getElementById('modelList');
+                const alert = document.getElementById('modelListAlert');
+
+                list.innerHTML = '';
+
+                if (data.models.length === 0) {
+                    alert.style.display = 'flex';
+                    return;
+                }
+
+                alert.style.display = 'none';
+
+                for (const model of data.models) {
+                    const item = document.createElement('div');
+                    item.className = 'model-item';
+                    item.innerHTML = `
+                        <div class="model-item-info">
+                            <div class="model-item-name">${model.filename}</div>
+                            <div class="model-item-meta">
+                                <span>📦 ${(model.size / 1e6).toFixed(1)} MB</span>
+                                <span>🧬 Gen ${model.generation || 0}</span>
+                                <span>⭐ Fitness ${(model.fitness || 0).toFixed(4)}</span>
+                                <span>🏷️ ${model.source || 'Unknown'}</span>
+                            </div>
+                        </div>
+                        <div class="model-item-actions">
+                            <button class="btn btn-secondary btn-small" onclick="verifyModel('${model.path}')">🔍 Verify</button>
+                            <button class="btn btn-primary btn-small" onclick="deployModel('${model.path}')">📦 Deploy</button>
+                        </div>
+                    `;
+                    list.appendChild(item);
+                }
+
+            } catch (error) {
+                console.error('Refresh error:', error);
+            }
+        }
+
+        async function refreshRetrainModels() {
+            const connected = await checkServer();
+            if (!connected) return;
+
+            try {
+                const resp = await fetch(`${API_BASE}/api/models`);
+                const data = await resp.json();
+
+                const select = document.getElementById('retrainModel');
+                select.innerHTML = '<option value="">-- Select a model --</option>';
+
+                for (const model of data.models) {
+                    const opt = document.createElement('option');
+                    opt.value = model.path;
+                    opt.textContent = `${model.filename} (Gen ${model.generation || 0})`;
+                    select.appendChild(opt);
+                }
+
+            } catch (error) {
+                console.error('Refresh error:', error);
+            }
+        }
+
+        async function verifyModel(path) {
+            try {
+                const resp = await fetch(`${API_BASE}/api/verify`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ path })
+                });
+                const data = await resp.json();
+
+                if (data.valid) {
+                    alert(`✓ Valid .aevQG∞ file\n\nMagic: ${data.magic}\nVersion: ${data.version}\nSource: ${data.source_model}\nParams: ${data.num_params.toLocaleString()}\nGeneration: ${data.generation}\nFitness: ${data.fitness.toFixed(6)}`);
+                } else {
+                    alert(`✗ Invalid file: ${data.error || 'Unknown error'}`);
+                }
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            }
+        }
+
+        async function deployModel(path) {
+            if (!confirm('Deploy this model to /boot/aevcog_pretrained.aevqginf?')) return;
+
+            try {
+                const resp = await fetch(`${API_BASE}/api/deploy`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        source: path,
+                        target: '/boot/aevcog_pretrained.aevqginf'
+                    })
+                });
+                const data = await resp.json();
+
+                if (data.success) {
+                    alert(`✓ Deployed to ${data.deployed_to}\n\nOS will load this model on next boot.`);
+                } else {
+                    alert(`Error: ${data.error}`);
+                }
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            }
+        }
+
+        // Local File Upload Handlers
+        let selectedFile = null;
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                processSelectedFile(file);
+            }
+        }
+
+        function processSelectedFile(file) {
+            selectedFile = file;
+
+            // Validate file type
+            if (!file.name.endsWith('.safetensors') && !file.name.endsWith('.bin')) {
+                alert('Please select a .safetensors or .bin file');
+                return;
+            }
+
+            // Display file info
+            document.getElementById('fileName').textContent = file.name;
+            document.getElementById('fileSize').textContent = `${(file.size / (1024 * 1024)).toFixed(2)} MB`;
+            document.getElementById('selectedFile').style.display = 'block';
+            document.getElementById('localOutputGroup').style.display = 'block';
+            document.getElementById('uploadBtn').disabled = false;
+
+            // Suggest output name
+            const baseName = file.name.replace(/\.(safetensors|bin)$/, '');
+            document.getElementById('localOutputFile').value = `${baseName}.aevqginf`;
+
+            log('uploadTerminal', `Selected: ${file.name} (${(file.size / (1024 ** 3)).toFixed(2)} GB)`, 'info');
+        }
+
+        function clearFile() {
+            selectedFile = null;
+            document.getElementById('selectedFile').style.display = 'none';
+            document.getElementById('localOutputGroup').style.display = 'none';
+            document.getElementById('uploadBtn').disabled = true;
+            document.getElementById('fileInput').value = '';
+            log('uploadTerminal', 'File selection cleared', 'info');
+        }
+
+        // Drag and drop
+        const dropZone = document.getElementById('dropZone');
+        if (dropZone) {
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('drag-over');
+            });
+
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.classList.remove('drag-over');
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('drag-over');
+
+                const file = e.dataTransfer.files[0];
+                if (file) {
+                    processSelectedFile(file);
+                }
+            });
+        }
+
+        async function startLocalUpload() {
+            if (!selectedFile) {
+                alert('No file selected');
+                return;
+            }
+
+            const connected = await checkServer();
+            if (!connected) {
+                alert('API server not running!');
+                return;
+            }
+
+            const outputFile = document.getElementById('localOutputFile').value;
+
+            document.getElementById('uploadBtn').disabled = true;
+            document.getElementById('uploadBtn').innerHTML = '<span class="spinner"></span> Processing...';
+            document.getElementById('uploadProgress').style.display = 'block';
+            document.getElementById('uploadStats').style.display = 'grid';
+
+            clearTerminal('uploadTerminal');
+            log('uploadTerminal', `🚀 Starting browser-side chunking for ${selectedFile.name}...`, 'highlight');
+            log('uploadTerminal', 'Reading file in browser (no upload yet)...', 'info');
+
+            const startTime = Date.now();
+
+            try {
+                // Use browser-side chunker (memory-efficient!)
+                const chunker = new SafetensorsChunker(selectedFile, 10); // 10MB chunks
+
+                const result = await chunker.process((progress) => {
+                    // Update UI with progress
+                    const percent = progress.progress || 0;
+                    document.getElementById('uploadFill').style.width = `${percent}%`;
+                    document.getElementById('uploadStep').textContent = progress.step;
+
+                    if (progress.totalParams) {
+                        const params = (progress.totalParams / 1e6).toFixed(1);
+                        document.getElementById('statUploaded').textContent = `${params}M params`;
+                        log('uploadTerminal', `✓ Found ${params}M parameters`, 'success');
+                    }
+
+                    if (progress.step.includes('chunk')) {
+                        document.getElementById('statStatus').textContent = 'Uploading chunks';
+                    } else if (progress.step.includes('Assembling')) {
+                        document.getElementById('statStatus').textContent = 'Assembling';
+                        log('uploadTerminal', 'Server assembling chunks...', 'info');
+                    } else if (progress.progress >= 100) {
+                        document.getElementById('statStatus').textContent = 'Complete';
+                    }
+                });
+
+                if (result.success) {
+                    const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+                    log('uploadTerminal', `✓ SUCCESS: Model converted in ${elapsed}s`, 'success');
+                    log('uploadTerminal', `✓ Saved: ${result.path}`, 'success');
+                    log('uploadTerminal', `✓ Compression: ${result.compression}`, 'success');
+                    log('uploadTerminal', `✓ Size: ${(result.size / 1e6).toFixed(2)} MB`, 'success');
+
+                    document.getElementById('uploadStep').textContent = 'Complete!';
+                    document.getElementById('uploadFill').style.width = '100%';
+
+                    setTimeout(() => {
+                        resetUploadUI();
+                        document.getElementById('uploadProgress').style.display = 'none';
+                        document.getElementById('uploadStats').style.display = 'none';
+                    }, 3000);
+                } else {
+                    throw new Error(result.error || 'Conversion failed');
+                }
+
+            } catch (error) {
+                log('uploadTerminal', `✗ Error: ${error.message}`, 'error');
+                resetUploadUI();
+            }
+        }
+
+        function resetUploadUI() {
+            document.getElementById('uploadBtn').disabled = false;
+            document.getElementById('uploadBtn').innerHTML = '🚀 Upload & Convert';
+        }
+
+        // ZIM Extraction
+        async function startZimExtraction() {
+            const zimPath = document.getElementById('zimPath').value.trim();
+            const workers = document.getElementById('zimWorkers').value;
+
+            if (!zimPath) {
+                alert('Please enter a ZIM file path');
+                return;
+            }
+
+            const connected = await checkServer();
+            if (!connected) {
+                alert('API server not running!');
+                return;
+            }
+
+            try {
+                const resp = await fetch(`${API_BASE}/api/zim-extract`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        zim_path: zimPath,
+                        workers: workers
+                    })
+                });
+
+                const data = await resp.json();
+
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                document.getElementById('zimStatus').style.display = 'block';
+                document.getElementById('zimStep').textContent = 'Initializing...';
+
+                // Start polling
+                currentJobId = data.job_id;
+                pollInterval = setInterval(() => pollZimJob(), 1000);
+
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            }
+        }
+
+        async function pollZimJob() {
+            if (!currentJobId) return;
+
+            try {
+                const resp = await fetch(`${API_BASE}/api/zim-status/${currentJobId}`);
+                const job = await resp.json();
+
+                document.getElementById('zimStep').textContent = job.step || 'Processing...';
+                document.getElementById('zimFill').style.width = `${job.progress || 0}%`;
+                document.getElementById('zimChunks').textContent = `${job.processed_chunks || 0}/${job.total_chunks || 0}`;
+                document.getElementById('zimKnowledge').textContent = (job.knowledge_count || 0).toLocaleString();
+                document.getElementById('zimWorkerCount').textContent = job.active_workers || 0;
+
+                if (job.status === 'complete' || job.status === 'error') {
+                    clearInterval(pollInterval);
+                    currentJobId = null;
+                }
+
+            } catch (error) {
+                console.error('Poll error:', error);
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            checkServer();
+            setInterval(checkServer, 5000);
+        });
+    </script>
+</body>
+
+</html>

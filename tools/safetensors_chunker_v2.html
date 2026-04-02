@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafeTensors Chunker v2</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2rem;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px dashed #667eea;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: #ddd;
+            outline: none;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .progress-section {
+            margin-top: 30px;
+            display: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #f0f0f0;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .log-box {
+            background: #1e1e1e;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+
+        .log-entry {
+            margin-bottom: 8px;
+        }
+
+        .log-entry.success {
+            color: #00ff00;
+        }
+
+        .log-entry.error {
+            color: #ff5555;
+        }
+
+        .log-entry.info {
+            color: #5599ff;
+        }
+
+        .log-entry.warn {
+            color: #ffaa55;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-box {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🔪 SafeTensors Chunker v2</h1>
+        <div class="subtitle">✨ Web Worker Powered - No Freezing!</div>
+
+        <div class="form-group">
+            <label>📁 Select SafeTensors File</label>
+            <input type="file" id="fileInput" accept=".safetensors" onchange="fileSelected()">
+        </div>
+
+        <div class="form-group">
+            <label>📦 Chunk Size: <span id="chunkSizeLabel">50 MB</span></label>
+            <input type="range" id="chunkSize" min="10" max="200" value="50" step="10" oninput="updateChunkSize()">
+            <small style="color: #666; display: block; margin-top: 5px;">
+                Larger chunks = Fewer files (10-200 MB recommended)
+            </small>
+        </div>
+
+        <button id="startBtn" onclick="startChunking()" disabled>
+            🚀 Start Chunking (Web Worker)
+        </button>
+
+        <div class="progress-section" id="progressSection">
+            <div class="stats">
+                <div class="stat-box">
+                    <div class="stat-value" id="statTensors">0</div>
+                    <div class="stat-label">Tensors</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="statParams">0M</div>
+                    <div class="stat-label">Parameters</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="statChunks">0</div>
+                    <div class="stat-label">Chunks Saved</div>
+                </div>
+            </div>
+
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill">0%</div>
+            </div>
+
+            <div class="log-box" id="logBox"></div>
+        </div>
+    </div>
+
+    <script>
+        let selectedFile = null;
+        let chunkSizeMB = 50;
+        let worker = null;
+        let chunksDownloaded = 0;
+        let baseName = '';
+
+        function fileSelected() {
+            selectedFile = document.getElementById('fileInput').files[0];
+            if (selectedFile) {
+                document.getElementById('startBtn').disabled = false;
+                baseName = selectedFile.name.replace('.safetensors', '');
+                log(`Selected: ${selectedFile.name} (${(selectedFile.size / 1024 / 1024).toFixed(1)} MB)`, 'info');
+            }
+        }
+
+        function updateChunkSize() {
+            chunkSizeMB = parseInt(document.getElementById('chunkSize').value);
+            document.getElementById('chunkSizeLabel').textContent = `${chunkSizeMB} MB`;
+        }
+
+        function log(message, type = 'info') {
+            const logBox = document.getElementById('logBox');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logBox.appendChild(entry);
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+
+        function bfloat16ToFloat32(uint8Array) {
+            const float32 = new Float32Array(uint8Array.length / 2);
+            const dataView = new DataView(uint8Array.buffer, uint8Array.byteOffset);
+
+            for (let i = 0; i < float32.length; i++) {
+                const bf16 = dataView.getUint16(i * 2, true);
+                const f32Bits = bf16 << 16;
+                float32[i] = new DataView(new Uint32Array([f32Bits]).buffer).getFloat32(0, true);
+            }
+
+            return float32;
+        }
+
+        function startChunking() {
+            if (!selectedFile) return;
+
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('progressSection').style.display = 'block';
+            document.getElementById('logBox').innerHTML = '';
+            chunksDownloaded = 0;
+
+            log('🚀 Starting Web Worker...', 'info');
+
+            // Create inline worker (avoids CORS issues)
+            const workerCode = `
+                ${bfloat16ToFloat32.toString()}
+
+                self.onmessage = async function(e) {
+                    const { type, data } = e.data;
+                    if (type === 'CHUNK_FILE') {
+                        await chunkSafeTensors(data.file, data.chunkSizeMB);
+                    }
+                };
+
+                async function chunkSafeTensors(file, chunkSizeMB) {
+                    try {
+                        postProgress('Reading header...', 5);
+
+                        const headerBlob = file.slice(0, Math.min(100 * 1024 * 1024, file.size));
+                        const headerBuffer = await headerBlob.arrayBuffer();
+                        const uint8Array = new Uint8Array(headerBuffer);
+
+                        const headerSize = Number(new DataView(headerBuffer, 0, 8).getBigUint64(0, true));
+                        const headerBytes = uint8Array.slice(8, 8 + headerSize);
+                        const headerStr = new TextDecoder().decode(headerBytes);
+                        const metadata = JSON.parse(headerStr);
+
+                        const tensorNames = Object.keys(metadata).filter(k => k !== '__metadata__');
+
+                        let totalParams = 0;
+                        for (const name of tensorNames) {
+                            const shape = metadata[name].shape;
+                            totalParams += shape.reduce((a, b) => a * b, 1);
+                        }
+
+                        postProgress('Found ' + tensorNames.length + ' tensors', 10, {
+                            tensors: tensorNames.length,
+                            totalParams: totalParams
+                        });
+
+                        const chunkSizeBytes = chunkSizeMB * 1024 * 1024;
+                        let chunkIndex = 0;
+                        let currentChunk = [];
+                        let currentSize = 0;
+
+                        for (let i = 0; i < tensorNames.length; i++) {
+                            const name = tensorNames[i];
+                            const tensorMeta = metadata[name];
+
+                            if (tensorMeta.dtype !== 'F32' && tensorMeta.dtype !== 'BF16') {
+                                postLog('Skipping ' + name, 'warn');
+                                continue;
+                            }
+
+                            const absoluteOffset = 8 + headerSize + tensorMeta.data_offsets[0];
+                            const dataSize = tensorMeta.data_offsets[1] - tensorMeta.data_offsets[0];
+
+                            const tensorBlob = file.slice(absoluteOffset, absoluteOffset + dataSize);
+                            const tensorBuffer = await tensorBlob.arrayBuffer();
+                            const tensorData = new Uint8Array(tensorBuffer);
+
+                            let values;
+                            if (tensorMeta.dtype === 'F32') {
+                                values = new Float32Array(tensorData.buffer, tensorData.byteOffset, tensorData.byteLength / 4);
+                            } else {
+                                values = bfloat16ToFloat32(tensorData);
+                            }
+
+                            let valuesArray = Array.from(values);
+                            if (valuesArray.length > 50000000) {
+                                const stride = Math.ceil(valuesArray.length / 25000000);
+                                valuesArray = valuesArray.filter((_, idx) => idx % stride === 0);
+                            }
+
+                            const tensorObj = { name, shape: tensorMeta.shape, values: valuesArray };
+                            const estimatedSize = valuesArray.length * 10;
+
+                            if (currentSize > 0 && currentSize + estimatedSize > chunkSizeBytes) {
+                                postChunk(chunkIndex, currentChunk);
+                                chunkIndex++;
+                                currentChunk = [];
+                                currentSize = 0;
+                            }
+
+                            currentChunk.push(tensorObj);
+                            currentSize += estimatedSize;
+
+                            const progress = 10 + ((i + 1) / tensorNames.length) * 85;
+                            postProgress('Processing ' + (i + 1) + '/' + tensorNames.length, progress);
+                        }
+
+                        if (currentChunk.length > 0) {
+                            postChunk(chunkIndex, currentChunk);
+                            chunkIndex++;
+                        }
+
+                        postProgress('Complete!', 100, { totalChunks: chunkIndex });
+
+                    } catch (error) {
+                        postError(error.message);
+                    }
+                }
+
+                function postProgress(message, percent, data = {}) {
+                    self.postMessage({ type: 'PROGRESS', message, percent, data });
+                }
+
+                function postLog(message, level = 'info') {
+                    self.postMessage({ type: 'LOG', message, level });
+                }
+
+                function postChunk(index, tensors) {
+                    self.postMessage({ type: 'CHUNK', index, tensors });
+                }
+
+                function postError(message) {
+                    self.postMessage({ type: 'ERROR', message });
+                }
+            `;
+
+            const blob = new Blob([workerCode], { type: 'application/javascript' });
+            const workerUrl = URL.createObjectURL(blob);
+            worker = new Worker(workerUrl);
+
+            worker.onmessage = function (e) {
+                const { type, message, percent, data, index, tensors, level } = e.data;
+
+                if (type === 'PROGRESS') {
+                    document.getElementById('progressFill').style.width = `${percent}%`;
+                    document.getElementById('progressFill').textContent = `${percent.toFixed(0)}%`;
+                    log(message, 'info');
+
+                    if (data?.tensors) {
+                        document.getElementById('statTensors').textContent = data.tensors;
+                    }
+                    if (data?.totalParams) {
+                        document.getElementById('statParams').textContent = `${(data.totalParams / 1e6).toFixed(1)}M`;
+                    }
+                    if (data?.totalChunks) {
+                        log(`✅ All ${data.totalChunks} chunks downloaded!`, 'success');
+                        document.getElementById('startBtn').disabled = false;
+                    }
+
+                } else if (type === 'LOG') {
+                    log(message, level);
+
+                } else if (type === 'CHUNK') {
+                    // Send chunk to server for saving
+                    const chunkData = {
+                        modelName: baseName,
+                        chunkIndex: index,
+                        tensors: tensors
+                    };
+
+                    fetch('http://localhost:8765/api/save-chunk', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(chunkData)
+                    })
+                        .then(res => res.json())
+                        .then(result => {
+                            if (result.success) {
+                                chunksDownloaded++;
+                                document.getElementById('statChunks').textContent = chunksDownloaded;
+                                log(`💾 Saved chunk ${index + 1} to server: ${result.path}`, 'success');
+                            } else {
+                                log(`❌ Failed to save chunk ${index + 1}: ${result.error}`, 'error');
+                            }
+                        })
+                        .catch(err => {
+                            log(`❌ Network error saving chunk ${index + 1}: ${err.message}`, 'error');
+                        });
+
+
+                } else if (type === 'ERROR') {
+                    log(`❌ Error: ${message}`, 'error');
+                    document.getElementById('startBtn').disabled = false;
+                }
+            };
+
+            // Start processing
+            worker.postMessage({
+                type: 'CHUNK_FILE',
+                data: { file: selectedFile, chunkSizeMB }
+            });
+        }
+    </script>
+</body>
+
+</html>
