@@ -4,7 +4,7 @@
 
 ## 🚀 Overview
 
-CR8OS (pronounced *create-os*) is a specialized, quantum-native kernel designed for high-fidelity neurosymbolic and quantum-gate simulations. Unlike standard kernels that treat quantum processors as external accelerators, CR8OS is built on the **Blackwell-QP Anyonic Protocol**, integrating quantum state management directly into the kernel's core execution and security layers.
+CR8OS (pronounced *create-os*) is a specialized, quantum-native kernel designed for high-fidelity neurosymbolic and quantum-gate operations. Unlike standard kernels that treat quantum processors as external accelerators, CR8OS is built on the **Blackwell-QP Anyonic Protocol**, integrating quantum state management directly into the kernel's core execution and security layers.
 
 ## 🧬 The Blackwell-QP Anyonic Protocol
 
@@ -59,7 +59,7 @@ CR8OS Kernel (64-bit Sovereign Core)
 ### Quantum APL Runtime (`kernel/apl_runtime.c`)
 - **Native Operations**:
   - Superposition & Entanglement
-  - Hadamard/CNOT gate simulations
+  - Hadamard/CNOT gate s
   - Neurosymbolic fitness evaluation
   - **100-1000x faster** than high-level implementations.
 
@@ -73,7 +73,7 @@ sudo apt-get install nasm gcc binutils qemu-system-x86
 ### Build Pipeline
 ```bash
 make        # Clean build of the cr8os.img
-make run    # Execute in QEMU environment (Blackwell-QP Simulation)
+make run    # Execute in QEMU environment (Blackwell-QP native operations)
 ```
 
 ### Artifacts
