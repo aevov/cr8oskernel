@@ -1,33 +1,68 @@
-# CR8OS Stage 2 - Native BootOS
+# CR8OS Kernel - Lattice Cascade & Quantum Engine
 
-**A fully installable, bootable operating system with native quantum computing support**
+**Bare-metal kernel module providing the lattice cascade engine (E8/D4/A2/S1) and quantum/genetic simulation primitives for the cr8OS unified architecture.**
 
-## 🚀 What is Stage 2?
+## Role in Unified Architecture
 
-Stage 2 (cr8oskernel) is the **native bootable version** of CR8OS that:
-- Boots directly on x86-64 hardware (no Docker, no VM)
-- Runs 100-1000x faster than Stage 1
-- Includes kernel-level APL runtime
-- Provides direct hardware access
-- Boots in <1 second
+cr8oskernel is the **mathematical substrate** of the cr8OS stack. It provides:
 
-## 📊 Architecture
+- **Lattice Cascade Engine** - The resonance cascade P48 -> L24 -> E8 -> D4 -> A2 -> S1 with Niemeier embedding, FNV-1a coset hashing, and self-dual mirror operations
+- **Quantum Simulation** - Classical quantum-state simulation (Hadamard, CNOT entanglement) running natively on bare metal
+- **Genetic Algorithm Engine** - OneMax fitness, crossover, mutation with kernel-level PRNG
+
+The code from cr8oskernel's `lattice.c`, `math.c`, and `apl_runtime.c` (renamed to `quantum_genetic.c`) has been integrated into the canonical bare-metal kernel at [cr8OS-complete-quantum/kernel/](https://github.com/Jesse-wakandaisland/cr8OS-complete-quantum/tree/main/kernel) via the `kcompat.h` compatibility shim.
+
+### The 3-Tier cr8OS Stack
 
 ```
-Hardware
-    ↓
+Tier 3 - Cloud/Edge:    Cr8OS 3.0 (CTQC via Cloudflare Workers)
+                            |
+Tier 2 - Distributed:    cr8OS 2.0 (Docker microservices + AevMesh + quantumfs)
+                            |
+Tier 1 - Bare Metal:     cr8OS-complete-quantum/kernel (this kernel, with cr8oskernel code integrated)
+                            |
+Foundation:              cr8oskernel (THIS REPO - lattice math + quantum primitives)
+```
+
+Each tier consumes the primitives from the layer below. The bare-metal kernel provides the math; the distributed tier adds networking and storage; the cloud tier adds global edge compute.
+
+### How Repos Connect
+
+| Repo | Role | Visibility |
+|------|------|-----------|
+| **cr8oskernel** (this repo) | Lattice math + quantum/genetic primitives. Expanding to ARM/RISC-V. | Public |
+| **cr8OS-complete-quantum** | Integration monorepo: canonical bare-metal kernel, all tiers, papers | Private |
+| **cr8OS 2.0** | Distributed tier: Docker microservices, AevMesh, quantumfs, AevIP | Private |
+| **Cr8OS 3.0** | Cloud/edge tier: CTQC via Cloudflare Workers, BIDC swarm | Private |
+| **afolabi-unified-framework** | Theoretical foundations: AFT, NRT, QMT, Level 4 manifestation | Public |
+| **aevos-main** | Independent browser-based OS (Rust -> WASM, io_uring, OPFS) | Public |
+
+### Unification Documentation
+
+- [cr8OS Unification Strategy (code-verified)](https://github.com/Jesse-wakandaisland/cr8OS-complete-quantum/blob/main/papers/cr8os-unification-strategy-code-verified.md) - Definitive analysis of all cr8OS variants with code-level verification
+- [cr8OS Unification Strategy (v1)](https://github.com/Jesse-wakandaisland/cr8OS-complete-quantum/blob/main/papers/cr8os-unification-strategy.md) - Original documentation-based analysis
+
+## Architecture
+
+```
+Hardware (x86, expanding to ARM/RISC-V)
+    |
 Bootloader (512 bytes) - bootos.asm
-    ↓
+    |
 Stage 2 Loader (4KB) - stage2.asm
-    ↓
-CR8OS Kernel (C) - Enters 64-bit long mode
-    ├── Memory Manager (memory.c)
-    ├── Hardware Drivers (hardware.c)
-    ├── APL Runtime (apl_runtime.c)
-    └── Main Kernel (main.c)
-    ↓
+    |
+CR8OS Kernel (C, 32-bit protected mode)
+    +-- Memory Manager (memory.c)
+    +-- Hardware Drivers (hardware.c)
+    +-- Lattice Cascade (lattice.c) -- E8/D4/A2/S1 projections
+    +-- Math Engine (math.c) -- sqrt, fabs, pow_int
+    +-- Quantum/Genetic (apl_runtime.c) -- superposition, Hadamard, CNOT, GA
+    +-- Main Kernel (main.c)
+    |
 Userland (JavaScript/APL)
 ```
+
+**Build target**: 32-bit protected mode (`-m32`, `-m elf_i386`). GRUB multiboot compatible.
 
 ## 🔧 Components
 
@@ -73,16 +108,36 @@ Userland (JavaScript/APL)
   - CPU feature detection
 
 ### APL Runtime (kernel/apl_runtime.c)
-- **Native Operations**:
-  - Quantum superposition
-  - Quantum gates (Hadamard, etc.)
-  - Qubit entanglement
-  - Genetic algorithms
-  - Fitness evaluation
-  - Crossover & mutation
-  - **100-1000x faster** than JavaScript!
+- **Quantum Simulation**:
+  - Superposition creation (equal amplitude across 2^n states)
+  - Hadamard gate application
+  - CNOT entanglement
+- **Genetic Algorithms**:
+  - OneMax fitness evaluation
+  - Single-point crossover
+  - Bit-flip mutation with configurable rate
+  - LCG-based PRNG
+- **Code Provenance**: This code has been integrated into the canonical kernel at `cr8OS-complete-quantum/kernel/quantum_genetic.c` (renamed to avoid collision with the bytecode VM at `runtime/apl_runtime.c`)
 
-## 🛠️ Building
+### Lattice Cascade (kernel/lattice.c)
+- **Cascade Rungs**: P48 (48-D) -> L24 (24-D) -> E8 (8-D) -> D4 (4-D) -> A2 (2-D) -> S1 (1-D)
+- **Operations**: Projection, lifting, dual, mirror constant, resonance (E8 inner product)
+- **Math**: FNV-1a 64-bit coset hashing, Pade atan2, Taylor cos/sin
+- **Code Provenance**: Integrated into canonical kernel at `cr8OS-complete-quantum/kernel/lattice.c`
+
+## Multi-Architecture Expansion
+
+cr8oskernel is expanding beyond x86 to support ARM and RISC-V natively:
+
+| Architecture | Status | Target Use Case |
+|-------------|--------|----------------|
+| **x86 (32-bit)** | Current | BIOS/MBR boot, GRUB multiboot, QEMU testing |
+| **ARM (AArch64)** | Planned | Raspberry Pi, embedded IoT, edge nodes |
+| **RISC-V (RV32/RV64)** | Planned | Open-hardware deployments, research boards |
+
+The lattice cascade and quantum/genetic engines are architecture-independent C code. The `kcompat.h` shim abstracts platform-specific APIs (memory allocation, serial I/O, timer access), making porting to new architectures a matter of implementing the boot stub and HAL layer.
+
+## Building
 
 ### Prerequisites
 
